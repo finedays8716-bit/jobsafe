@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부모님을 지켜주는 안전 약속</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #F5F0E8;
+  color: #2C1F0E;
+}
+
+/* ===== 화면 전환 ===== */
+.page {
+  display: none;
+}
+.page.on {
+  display: block;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 64px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #F5F0E8;
+  z-index: 1;
+}
+
+/* ===== 하단 탭 ===== */
+.tab-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: #FDF8F0;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  display: flex;
+  z-index: 100;
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.tab-btn .ti { font-size: 1.4rem; }
+.tab-btn .tl { font-size: 11px; font-weight: 500; color: #A09070; }
+.tab-btn.on .tl { color: #4A7C59; font-weight: 700; }
+
+/* ===== 공통 ===== */
+.btn-green {
+  background: #4A7C59;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.875rem 2rem;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+}
+.btn-green:hover { background: #3d6b4a; }
+
+.btn-outline {
+  background: transparent;
+  color: #4A7C59;
+  border: 2px solid #4A7C59;
+  border-radius: 50px;
+  padding: 0.875rem 2rem;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+}
+
+/* ===== 메인 ===== */
+#page-home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #FDFAF4;
+  min-height: 100%;
+  padding: 2rem 2rem 1rem;
+}
+.home-deco { font-size: 5rem; margin-bottom: 1.5rem; animation: bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.home-title { font-size: clamp(2rem,4vw,3rem); font-weight: 900; color: #2E7D32; line-height: 1.2; margin-bottom: 0.75rem; }
+.home-sub { font-size: 1.1rem; color: #558B2F; font-weight: 500; margin-bottom: 3rem; }
+.home-cards { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2.5rem; }
+.home-card {
+  background: #FDF8F0;
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  border: 2px solid rgba(74,124,89,0.2);
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  cursor: pointer; min-width: 120px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.home-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+.home-card .num {
+  width: 28px; height: 28px; background: #F9A825; color: white;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+.home-card .lbl { font-size: 13px; font-weight: 500; color: #6B5A3E; }
+
+/* ===== 이야기나누기 ===== */
+#page-story { background: #F5F0E8; }
+.story-topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: #FDF8F0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 0.75rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.story-topbar-title { font-size: 15px; font-weight: 700; color: #6B4C2A; }
+.dots { display: flex; gap: 6px; align-items: center; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(107,76,42,0.2); transition: all 0.3s; }
+.dot.on { background: #4A7C59; width: 24px; border-radius: 4px; }
+
+.slide { display: none; }
+.slide.on { display: flex; flex-direction: column; }
+
+/* 슬라이드0 - 배경이미지 */
+#slide-0 {
+  position: relative;
+  min-height: calc(100vh - 120px);
+  overflow: hidden;
+}
+.slide-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.slide-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1; }
+.slide-inner { position: relative; z-index: 2; padding: 2rem 4vw; display: flex; flex-direction: column; min-height: calc(100vh - 120px); justify-content: center; gap: 1.5rem; }
+.slide-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.25); color: white;
+  border-radius: 50px; padding: 6px 16px;
+  font-size: 1rem; font-weight: 700; width: fit-content;
+}
+.slide-title-white {
+  font-size: clamp(1.8rem,3.5vw,3rem); font-weight: 900; color: white;
+  text-shadow: 0 3px 12px rgba(0,0,0,0.6); line-height: 1.3;
+}
+.msg-dark {
+  background: rgba(0,0,0,0.5);
+  border-left: 5px solid #F9A825;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  color: white;
+  font-size: clamp(1.1rem,2vw,1.5rem);
+  line-height: 1.9;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  word-break: keep-all;
+}
+.msg-dark strong { color: #FFE082; }
+
+/* 슬라이드1 - 위험상황 */
+#slide-1 { padding: 2rem 4vw; min-height: calc(100vh - 120px); gap: 1rem; justify-content: center; }
+.slide-tag-green {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #E8F4ED; color: #4A7C59;
+  border-radius: 50px; padding: 5px 14px;
+  font-size: 12px; font-weight: 700; width: fit-content;
+}
+.slide-title { font-size: clamp(1.6rem,2.8vw,2.6rem); font-weight: 900; color: #6B4C2A; line-height: 1.3; }
+.danger-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.75rem; flex: 1; }
+.dcard {
+  border-radius: 12px; overflow: hidden;
+  display: flex; flex-direction: column;
+  animation: popIn 0.35s ease;
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+.dcard.red { background: #F8E8E8; border: 1.5px solid rgba(201,74,74,0.2); }
+.dcard.orange { background: #FDF0E8; border: 1.5px solid rgba(232,133,74,0.2); }
+.dcard.blue { background: #E8F0F8; border: 1.5px solid rgba(74,123,168,0.2); }
+.dcard.yellow { background: #FEFAE8; border: 1.5px solid rgba(245,200,66,0.2); }
+.dcard img { width: 100%; flex: 1; min-height: 0; object-fit: cover; display: block; }
+.dcard-icon { display: none; }
+.dcard-text { padding: 0.875rem 1rem 1rem; }
+.dcard-title { font-size: clamp(15px,1.8vw,22px); font-weight: 700; margin-bottom: 6px; }
+.dcard.red .dcard-title { color: #C94A4A; }
+.dcard.orange .dcard-title { color: #C06030; }
+.dcard.blue .dcard-title { color: #4A7BA8; }
+.dcard.yellow .dcard-title { color: #8A6E00; }
+.dcard-desc { font-size: clamp(13px,1.4vw,17px); line-height: 1.7; color: #6B5A3E; }
+.danger-counter { text-align: center; font-size: 13px; font-weight: 500; color: #A09070; }
+
+/* 슬라이드2 - 핵심메시지 */
+#slide-2 {
+  position: relative;
+  min-height: calc(100vh - 120px);
+  overflow: hidden;
+}
+.key-msgs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+.key-msg {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  display: flex; flex-direction: column; gap: 0.75rem; align-items: center;
+  text-align: center;
+}
+.km-img { width: clamp(160px,18vw,300px); height: clamp(160px,18vw,300px); object-fit: contain; }
+.km-text { font-size: clamp(1.2rem,2vw,1.7rem); line-height: 1.1; color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.km-text strong { color: #FFE082; display: block; margin-bottom: 8px; font-size: clamp(1.5rem,2.8vw,2.4rem); }
+.promise-final {
+  background: rgba(0,0,0,0.5);
+  border-radius: 16px;
+  padding: 1.25rem 2.5rem;
+  text-align: center;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+.promise-final p {
+  font-size: clamp(1.2rem,2.2vw,1.8rem); font-weight: 900;
+  color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  line-height: 1.5; word-break: keep-all;
+  white-space: nowrap;
+}
+
+/* 슬라이드 버튼 */
+.slide-btns {
+  display: flex; justify-content: flex-end; align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1.5px solid rgba(107,76,42,0.1);
+  margin-top: auto;
+  gap: 0.75rem;
+}
+.slide-btns.white { border-top-color: rgba(255,255,255,0.2); }
+.btn-nav {
+  background: #FDF8F0;
+  border: 1.5px solid rgba(107,76,42,0.15);
+  border-radius: 50px;
+  padding: 0.75rem 1.5rem;
+  font-size: 14px; font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #6B4C2A;
+  cursor: pointer;
+}
+.btn-nav.primary { background: #4A7C59; color: white; border-color: #4A7C59; }
+.btn-nav.white-style { background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.4); }
+
+/* ===== 도구 연결하기 ===== */
+#page-match { background: #F5F0E8; }
+.game-header {
+  background: #FDF8F0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 1rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  position: sticky; top: 0; z-index: 100;
+}
+.gh-title { font-size: 16px; font-weight: 700; color: #6B4C2A; }
+.gh-sub { font-size: 12px; color: #A09070; margin-top: 2px; }
+.diff-tabs { display: flex; gap: 6px; }
+.diff-tab {
+  padding: 5px 14px; border-radius: 50px;
+  border: 1.5px solid rgba(107,76,42,0.15);
+  background: transparent; font-size: 12px; font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif; color: #6B5A3E; cursor: pointer;
+}
+.diff-tab.on { background: #4A7C59; color: white; border-color: #4A7C59; }
+
+.match-wrap { padding: 0.75rem 2vw 1rem; }
+.match-info { text-align: center; font-size: clamp(15px,1.6vw,20px); font-weight: 500; color: #4A7C59; background: #E8F4ED; border-radius: 10px; padding: 0.625rem 1rem; margin-bottom: 0.5rem; }
+.match-score-txt { text-align: center; font-size: 13px; color: #A09070; font-weight: 500; margin-bottom: 0.75rem; }
+
+.slots-area { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
+.slot-card {
+  display: flex; flex-direction: column; align-items: center;
+  border-radius: 12px; border: 2px dashed rgba(107,76,42,0.2);
+  background: #FDF8F0; width: 210px; flex-shrink: 0; overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.slot-card.over { border-color: #4A7C59; background: #E8F4ED; }
+.slot-card.matched { border: 2px solid #4A7C59; background: #E8F4ED; }
+.slot-card.wrong { border-color: #C94A4A; background: #F8E8E8; animation: shake 0.35s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+.slot-top { width: 100%; padding: 0.625rem 0.5rem 0.5rem; display: flex; flex-direction: column; align-items: center; gap: 6px; border-bottom: 1.5px dashed rgba(107,76,42,0.15); }
+.slot-desc { font-size: clamp(14px,1.5vw,18px); color: #6B5A3E; text-align: center; line-height: 1.4; font-weight: 500; min-height: 30px; }
+.slot-tool-img { width: clamp(100px,9vw,140px); height: clamp(100px,9vw,140px); object-fit: contain; }
+.slot-tool-name { font-size: clamp(15px,1.6vw,20px); font-weight: 700; color: #6B4C2A; text-align: center; }
+.slot-drop { width: 100%; min-height: 110px; display: flex; align-items: center; justify-content: center; padding: 0.5rem; }
+.slot-hint { font-size: 11px; color: #A09070; text-align: center; line-height: 1.5; }
+.slot-hint span { display: block; font-size: 1.25rem; margin-bottom: 2px; }
+.placed-card { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+.placed-card img { width: clamp(80px,8vw,110px); height: clamp(80px,8vw,110px); object-fit: contain; }
+.placed-card .placed-lbl { font-size: clamp(11px,1.1vw,14px); font-weight: 700; color: #0F6E56; text-align: center; }
+
+.jobs-area {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+  padding: 1rem; background: rgba(107,76,42,0.04);
+  border-radius: 16px; border: 1.5px dashed rgba(107,76,42,0.12); min-height: 110px;
+}
+.job-card {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: #FDF8F0; border-radius: 12px; border: 2px solid rgba(107,76,42,0.12);
+  padding: 0.625rem 0.75rem; cursor: grab; user-select: none; touch-action: none;
+  width: clamp(110px,11vw,160px); transition: transform 0.15s, box-shadow 0.15s;
+}
+.job-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+.job-card.selected { border-color: #4A7C59; background: #E8F4ED; transform: translateY(-3px); }
+.job-card.dragging { opacity: 0.4; cursor: grabbing; }
+.job-card img { width: clamp(80px,8vw,115px); height: clamp(80px,8vw,115px); object-fit: contain; }
+.job-card .job-lbl { font-size: clamp(14px,1.5vw,18px); font-weight: 700; color: #6B5A3E; text-align: center; }
+
+/* 완성 오버레이 */
+.complete-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 9000;
+  align-items: center; justify-content: center;
+}
+.complete-overlay.on { display: flex; }
+.complete-box {
+  background: #E8F4ED; border-radius: 20px; padding: 2rem;
+  border: 2px solid rgba(74,124,89,0.3); text-align: center;
+  max-width: 360px; width: 90%;
+}
+.complete-box .ce { font-size: 3rem; margin-bottom: 0.75rem; }
+.complete-box h3 { font-size: 1.75rem; font-weight: 900; color: #4A7C59; margin-bottom: 0.5rem; }
+.complete-box p { font-size: 14px; color: #6B5A3E; margin-bottom: 1.5rem; }
+.complete-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* 파티클 */
+.particle { position: fixed; pointer-events: none; z-index: 9999; border-radius: 50%; animation: pfly 0.8s cubic-bezier(0.2,0.8,0.4,1) forwards; }
+@keyframes pfly { 0%{opacity:1;transform:translate(0,0) scale(1)} 70%{opacity:1;transform:translate(var(--tx),var(--ty)) scale(0.8)} 100%{opacity:0;transform:translate(var(--tx2),var(--ty2)) scale(0.3)} }
+.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8); background: #F5C842; color: #6B4C2A; font-size: 1.4rem; font-weight: 900; padding: 0.75rem 2rem; border-radius: 50px; z-index: 9998; pointer-events: none; opacity: 0; animation: toastPop 1s ease forwards; white-space: nowrap; }
+@keyframes toastPop { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.7)} 20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 60%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.9)} }
+
+/* 색종이 */
+.confetti-el { position: fixed; pointer-events: none; z-index: 9999; animation: cffall var(--dur) ease-in forwards; }
+@keyframes cffall { 0%{transform:translateY(-20px) rotate(0deg);opacity:1} 80%{opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+/* ===== 메모리게임 ===== */
+#page-memory { background: #F5F0E8; }
+.memory-wrap { padding: 1rem 4vw; }
+.mem-stats { display: flex; gap: 12px; margin-bottom: 1.25rem; justify-content: center; }
+.ms-box { background: #FDF8F0; border-radius: 12px; padding: 8px 18px; text-align: center; border: 1.5px solid rgba(107,76,42,0.08); }
+.ms-label { font-size: 11px; color: #A09070; }
+.ms-val { font-size: 20px; font-weight: 900; color: #6B4C2A; }
+.mem-board { display: grid; gap: 10px; justify-content: center; align-content: center; margin-bottom: 0.75rem; }
+.mcard { border-radius: 12px; border: 2px solid rgba(107,76,42,0.12); background: #FDF8F0; cursor: pointer; position: relative; overflow: hidden; transition: transform 0.15s; aspect-ratio: 1; }
+.mcard:hover:not(.matched):not(.flipped) { transform: scale(1.05); }
+.mcard-inner { width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.4s ease; }
+.mcard.flipped .mcard-inner, .mcard.matched .mcard-inner { transform: rotateY(180deg); }
+.mcard-back, .mcard-front { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; }
+.mcard-back { background: #4A7C59; }
+.mcard-back .bq { font-size: 1.75rem; font-weight: 900; color: white; }
+.mcard-front { background: #FDF8F0; transform: rotateY(180deg); padding: 6px; }
+.mcard-front img { width: 80%; height: 80%; object-fit: contain; }
+.mcard.matched { border-color: #4A7C59; }
+.mcard.matched .mcard-front { background: #E8F4ED; }
+.mcard.wrong { border-color: #C94A4A; animation: shake 0.35s ease; }
+.mem-complete { display: none; text-align: center; background: #E8F4ED; border-radius: 20px; padding: 2rem; border: 2px solid rgba(74,124,89,0.2); margin-top: 1rem; }
+.mem-complete.on { display: block; }
+.mem-complete .trophy { font-size: 3.5rem; margin-bottom: 0.75rem; }
+.mem-complete h3 { font-size: 2rem; font-weight: 900; color: #4A7C59; margin-bottom: 0.5rem; }
+.mem-complete p { font-size: 14px; color: #6B5A3E; margin-bottom: 1.5rem; }
+.mem-complete-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+@media(max-width:600px) {
+  .danger-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- 메인 -->
+<div id="page-home" class="page on">
+  <img src="img/main_icon.webp" class="home-deco" alt="안전 아이콘" style="width:clamp(80px,10vw,140px);height:clamp(80px,10vw,140px);object-fit:contain;" onerror="this.outerHTML='<div class=&quot;home-deco&quot;>🏗️</div>'">
+  <h1 class="home-title">부모님을 지켜주는<br>안전 약속</h1>
+  <p class="home-sub">일터에서도 안전이 가장 중요해요!</p>
+  <div class="home-cards">
+    <div class="home-card" onclick="goTo('story')">
+      <div class="num">1</div>
+      <div style="font-size:1.75rem">📖</div>
+      <div class="lbl">이야기나누기</div>
+    </div>
+    <div class="home-card" onclick="goTo('match')">
+      <div class="num">2</div>
+      <div style="font-size:1.75rem">🔗</div>
+      <div class="lbl">도구 연결하기</div>
+    </div>
+    <div class="home-card" onclick="goTo('memory')">
+      <div class="num">3</div>
+      <div style="font-size:1.75rem">🃏</div>
+      <div class="lbl">메모리게임</div>
+    </div>
+  </div>
+  <button class="btn-green" style="font-size:1.2rem;padding:1rem 3rem;box-shadow:0 4px 16px rgba(74,124,89,0.3);" onclick="goTo('story')">▶ 시작하기</button>
+</div>
+
+<!-- 이야기나누기 -->
+<div id="page-story" class="page">
+  <div class="story-topbar">
+    <div class="story-topbar-title">📖 이야기나누기</div>
+    <div class="dots">
+      <div class="dot on" id="dot0"></div>
+      <div class="dot" id="dot1"></div>
+      <div class="dot" id="dot2"></div>
+    </div>
+  </div>
+
+  <!-- 슬라이드0 -->
+  <div class="slide on" id="slide-0">
+    <img src="img/intro_talk.webp" class="slide-bg" alt="" onerror="this.style.display='none'">
+    <div class="slide-overlay"></div>
+    <div class="slide-inner">
+      <div class="slide-tag">💛 마음 열기</div>
+      <h2 class="slide-title-white">부모님이 일하시는 곳은 안전한가요?</h2>
+      <div class="msg-dark">
+        "우리가 유치원에서 안전하게 놀이하듯,<br>부모님도 일터에서 <strong>안전하게 일하는 것</strong>이 아주 중요해요!"
+      </div>
+      <div class="slide-btns white" style="justify-content:space-between;">
+        <button class="btn-nav white-style" onclick="goTo('home')">← 홈</button>
+        <button class="btn-nav primary" onclick="storyGo(1)">다음 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 슬라이드1 -->
+  <div class="slide" id="slide-1">
+    <div class="slide-tag-green" style="margin:2rem 4vw 0">⚠️ 위험 상황 알아보기</div>
+    <div style="padding:1rem 4vw;flex:1;display:flex;flex-direction:column;gap:0.75rem;">
+      <h2 class="slide-title">일터에서도<br>다칠 수 있어요</h2>
+      <div class="danger-grid" id="danger-grid">
+        <div class="dcard red" id="dc0" style="display:none">
+          <img src="img/danger_1.webp" alt="골절" onerror="this.style.display='none'">
+          <div class="dcard-icon">🦴</div>
+          <div class="dcard-text">
+            <div class="dcard-title">골절 (뼈 부러짐)</div>
+            <div class="dcard-desc">무거운 물건을 옮기다 놓치거나 무리하게 일하면 뼈가 다칠 수 있어요.</div>
+          </div>
+        </div>
+        <div class="dcard orange" id="dc1" style="display:none">
+          <img src="img/danger_2.webp" alt="추락" onerror="this.style.display='none'">
+          <div class="dcard-icon">😨</div>
+          <div class="dcard-text">
+            <div class="dcard-title">떨어짐 (추락)</div>
+            <div class="dcard-desc">사다리나 높은 곳에서 발을 잘못 디디면 밑으로 떨어져 크게 다칠 수 있어요.</div>
+          </div>
+        </div>
+        <div class="dcard blue" id="dc2" style="display:none">
+          <img src="img/danger_3.webp" alt="감전" onerror="this.style.display='none'">
+          <div class="dcard-icon">⚡</div>
+          <div class="dcard-text">
+            <div class="dcard-title">감전 (전기 사고)</div>
+            <div class="dcard-desc">물 묻은 손으로 전기를 만지면 찌릿! 하고 전기에 감전될 수 있어 위험해요.</div>
+          </div>
+        </div>
+        <div class="dcard yellow" id="dc3" style="display:none">
+          <img src="img/danger_4.webp" alt="기타사고" onerror="this.style.display='none'">
+          <div class="dcard-icon">🔥</div>
+          <div class="dcard-text">
+            <div class="dcard-title">그 밖의 사고들</div>
+            <div class="dcard-desc">뜨거운 것에 데이는 화상, 기계에 몸이 끼이는 끼임 사고 등이 있어요.</div>
+          </div>
+        </div>
+      </div>
+      <div class="danger-counter" id="dcounter">버튼을 눌러 위험 상황을 알아봐요!</div>
+      <div class="slide-btns" style="justify-content:space-between;">
+        <button class="btn-nav" onclick="storyGo(0)">← 이전</button>
+        <button class="btn-nav primary" id="dbtn" onclick="showDanger()">다음 위험 보기 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 슬라이드2 -->
+  <div class="slide" id="slide-2" style="position:relative;min-height:calc(100vh - 120px);overflow:hidden;">
+    <img src="img/msg_3.webp" class="slide-bg" alt="" onerror="this.style.display='none'">
+    <div class="slide-overlay" style="background:rgba(0,0,0,0.35);"></div>
+    <div class="slide-inner">
+      <div class="slide-tag">⭐ 핵심 메시지</div>
+      <h2 class="slide-title-white">일터에서도 안전이 제일이에요!</h2>
+      <div class="key-msgs">
+        <div class="key-msg">
+          <img src="img/msg_1.webp" class="km-img" alt="" onerror="this.style.display='none'">
+          <div class="km-text"><strong>모든 장소에서 안전이 중요해요!</strong><br>집, 유치원뿐만 아니라 부모님이 일하시는 모든 일터는 안전해야 해요.</div>
+        </div>
+        <div class="key-msg">
+          <img src="img/msg_2.webp" class="km-img" alt="" onerror="this.style.display='none'">
+          <div class="km-text"><strong>안전 도구는 약속이에요!</strong><br>보호구를 착용하는 것은 나와 가족의 행복을 지키는 소중한 약속이에요.</div>
+        </div>
+      </div>
+      <div class="promise-final">
+        <p>"엄마, 아빠! 일터에서 꼭 안전 도구를 사용하고 조심하세요!"</p>
+      </div>
+      <div class="slide-btns white" style="justify-content:space-between;">
+        <button class="btn-nav white-style" onclick="storyGo(1)">← 이전</button>
+        <button class="btn-nav primary" onclick="goTo('match')">도구 연결하기 시작 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 도구 연결하기 -->
+<div id="page-match" class="page">
+  <div class="game-header">
+    <div>
+      <div class="gh-title">🔗 도구 연결하기</div>
+      <div class="gh-sub">직업 카드를 올바른 도구 칸에 올려요</div>
+    </div>
+    <div class="diff-tabs">
+      <button class="diff-tab on" onclick="setMDiff(0)">쉬움</button>
+      <button class="diff-tab" onclick="setMDiff(1)">보통</button>
+      <button class="diff-tab" onclick="setMDiff(2)">어려움</button>
+    </div>
+  </div>
+  <div class="match-wrap">
+    <div class="match-info" id="minfo">직업 카드를 선택하고 알맞은 도구 칸에 올려요!</div>
+    <div class="match-score-txt" id="mscore">0 / 0 완료</div>
+    <div class="slots-area" id="slots"></div>
+    <div class="jobs-area" id="jobs"></div>
+  </div>
+</div>
+
+<!-- 도구연결 완성 오버레이 -->
+<div class="complete-overlay" id="match-done">
+  <div class="complete-box">
+    <div class="ce">🎉</div>
+    <h3>모두 찾았어요!</h3>
+    <p id="match-done-msg"></p>
+    <div class="complete-btns">
+      <button class="btn-outline" onclick="closeMatchDone();initMatch();">다시 하기</button>
+      <button class="btn-green" onclick="closeMatchDone();goTo('memory');">메모리게임 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 메모리게임 -->
+<div id="page-memory" class="page">
+  <div class="game-header">
+    <div>
+      <div class="gh-title">🃏 메모리 게임</div>
+      <div class="gh-sub">카드를 뒤집어 짝을 찾아요</div>
+    </div>
+    <div class="diff-tabs">
+      <button class="diff-tab on" onclick="setMemDiff(0)">쉬움</button>
+      <button class="diff-tab" onclick="setMemDiff(1)">보통</button>
+      <button class="diff-tab" onclick="setMemDiff(2)">어려움</button>
+    </div>
+  </div>
+  <div class="memory-wrap">
+    <div class="mem-stats">
+      <div class="ms-box"><div class="ms-label">매칭</div><div class="ms-val" id="mem-matched">0/0</div></div>
+      <div class="ms-box"><div class="ms-label">걸린 시간</div><div class="ms-val" id="mem-timer">0초</div></div>
+      <button class="btn-outline" style="padding:6px 16px;font-size:13px;" onclick="initMem()">↺ 다시 시작</button>
+    </div>
+    <div id="mem-ready" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:3rem 2rem;text-align:center;">
+      <div style="font-size:3rem;">🃏</div>
+      <h2 style="font-size:clamp(1.4rem,2.5vw,2rem);font-weight:900;color:#6B4C2A;">준비됐나요?</h2>
+      <p style="font-size:clamp(1rem,1.5vw,1.3rem);color:#6B5A3E;line-height:1.7;">시작하면 카드를 <strong style="color:#4A7C59;">3초</strong> 동안 보여줄게요.<br>잘 기억했다가 짝을 찾아요!</p>
+      <button class="btn-green" style="font-size:1.2rem;padding:1rem 3rem;" onclick="startMem()">▶ 게임 시작!</button>
+    </div>
+    <div class="mem-board" id="mem-board" style="display:none;"></div>
+    <div class="mem-complete" id="mem-complete">
+      <div class="trophy">🏆</div>
+      <h3>완성!</h3>
+      <p id="mem-complete-msg"></p>
+      <div class="mem-complete-btns">
+        <button class="btn-outline" onclick="initMem()">다시 하기</button>
+        <button class="btn-green" onclick="goTo('home')">처음으로 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 하단 탭 -->
+<nav class="tab-bar">
+  <button class="tab-btn on" id="tab-home" onclick="goTo('home')"><span class="ti">🏠</span><span class="tl">홈</span></button>
+  <button class="tab-btn" id="tab-story" onclick="goTo('story')"><span class="ti">📖</span><span class="tl">이야기</span></button>
+  <button class="tab-btn" id="tab-match" onclick="goTo('match')"><span class="ti">🔗</span><span class="tl">도구 연결</span></button>
+  <button class="tab-btn" id="tab-memory" onclick="goTo('memory')"><span class="ti">🃏</span><span class="tl">메모리</span></button>
+</nav>
+
+<script>
+// ===== 데이터 =====
+const PAIRS = [
+  {id:0,job:'운전기사',jobE:'🚌',jobImg:'img/j_driver.webp',tool:'안전띠',toolE:'🪢',toolImg:'img/t_driver.webp',toolDesc:'운전 중 몸을 고정해 주는 생명 끈이에요'},
+  {id:1,job:'조리사',jobE:'👨‍🍳',jobImg:'img/j_cook.webp',tool:'주방용 장갑',toolE:'🧤',toolImg:'img/t_cook.webp',toolDesc:'뜨거운 냄비를 안전하게 잡아 줘요'},
+  {id:2,job:'소방관',jobE:'👨‍🚒',jobImg:'img/j_fireman.webp',tool:'방화복',toolE:'🦺',toolImg:'img/t_fireman.webp',toolDesc:'불꽃과 열기로부터 몸 전체를 지켜요'},
+  {id:3,job:'환경미화원',jobE:'🧹',jobImg:'img/j_cleaner.webp',tool:'반사 조끼',toolE:'🦺',toolImg:'img/t_cleaner.webp',toolDesc:'밤길에서도 잘 보이게 해줘요'},
+  {id:4,job:'건설 노동자',jobE:'👷',jobImg:'img/j_builder.webp',tool:'안전모',toolE:'⛑️',toolImg:'img/t_builder.webp',toolDesc:'머리를 다치지 않게 지켜줘요'},
+  {id:5,job:'정비사',jobE:'🔧',jobImg:'img/j_mechanic.webp',tool:'안전 장갑',toolE:'🧤',toolImg:'img/t_mechanic.webp',toolDesc:'날카로운 도구로부터 손을 보호해요'},
+  {id:6,job:'용접공',jobE:'⚙️',jobImg:'img/j_welder.webp',tool:'용접 헬멧',toolE:'🪖',toolImg:'img/t_welder.webp',toolDesc:'강한 빛과 불꽃으로부터 눈과 얼굴을 지켜요'},
+  {id:7,job:'전기 기술자',jobE:'⚡',jobImg:'img/j_electric.webp',tool:'절연 장갑',toolE:'🧤',toolImg:'img/t_electric.webp',toolDesc:'전기 감전을 막아주는 특수 장갑이에요'},
+];
+const DCFG = [
+  {pairs:[0,1,2],cols:3,rows:2,preview:3000},
+  {pairs:[0,1,2,3,4,5],cols:4,rows:3,preview:3000},
+  {pairs:[0,1,2,3,4,5,6,7],cols:4,rows:4,preview:3000},
+];
+
+// ===== 화면 전환 =====
+function goTo(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('page-' + name).classList.add('on');
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('on');
+  const activePage = document.getElementById('page-' + name);
+  if (activePage) activePage.scrollTop = 0;
+  if (name === 'story') resetStory();
+  if (name === 'match') initMatch();
+  if (name === 'memory') initMem();
+}
+
+function resetStory() {
+  // 슬라이드 첫 번째로 리셋
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('on'));
+  document.getElementById('slide-0').classList.add('on');
+  slideIdx = 0;
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('dot' + i).classList.toggle('on', i === 0);
+  }
+  resetDanger();
+}
+
+// ===== 이야기나누기 =====
+let slideIdx = 0;
+function storyGo(n) {
+  document.getElementById('slide-' + slideIdx).classList.remove('on');
+  slideIdx = n;
+  document.getElementById('slide-' + n).classList.add('on');
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('dot' + i).classList.toggle('on', i === n);
+  }
+  if (n === 1) resetDanger();
+  const activePage = document.getElementById('page-' + name);
+  if (activePage) activePage.scrollTop = 0;
+}
+
+// 위험상황
+let dIdx = -1;
+function showDanger() {
+  dIdx++;
+  if (dIdx < 4) {
+    document.getElementById('dc' + dIdx).style.display = '';
+    const counter = document.getElementById('dcounter');
+    const btn = document.getElementById('dbtn');
+    if (dIdx < 3) {
+      counter.textContent = (dIdx+1) + ' / 4 번째 위험 상황';
+    } else {
+      counter.textContent = '모든 위험 상황을 알아봤어요!';
+      btn.textContent = '다음 →';
+      btn.onclick = function() { storyGo(2); };
+    }
+  }
+}
+function resetDanger() {
+  dIdx = -1;
+  for (let i = 0; i < 4; i++) document.getElementById('dc' + i).style.display = 'none';
+  document.getElementById('dcounter').textContent = '버튼을 눌러 위험 상황을 알아봐요!';
+  const btn = document.getElementById('dbtn');
+  btn.textContent = '다음 위험 보기 →';
+  btn.onclick = showDanger;
+}
+
+// ===== 도구 연결하기 =====
+let mDiff = 0, mPairs = [], mCorrect = 0, mTries = 0, mSelected = null, mDragId = null;
+
+function setMDiff(d) {
+  mDiff = d;
+  document.querySelectorAll('#page-match .diff-tab').forEach((t,i) => t.classList.toggle('on', i===d));
+  initMatch();
+}
+
+function initMatch() {
+  mCorrect = 0; mTries = 0; mSelected = null; mDragId = null;
+  closeMatchDone();
+  mPairs = DCFG[mDiff].pairs.map(i => PAIRS[i]);
+  renderSlots();
+  renderJobs();
+  updMScore();
+}
+
+function renderSlots() {
+  const el = document.getElementById('slots');
+  el.innerHTML = '';
+  mPairs.forEach(p => {
+    const s = document.createElement('div');
+    s.className = 'slot-card';
+    s.dataset.pid = p.id;
+    s.innerHTML = '<div class="slot-top">' +
+      '<div class="slot-desc">' + p.toolDesc + '</div>' +
+      '<img src="' + p.toolImg + '" class="slot-tool-img" alt="' + p.tool + '">' +
+      '<div class="slot-tool-name">' + p.tool + '</div>' +
+      '</div>' +
+      '<div class="slot-drop" id="sd-' + p.id + '">' +
+      '<div class="slot-hint"><span>👆</span>여기에 올려요</div>' +
+      '</div>';
+    s.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); if (!s.classList.contains('matched')) s.classList.add('over'); });
+    s.addEventListener('dragleave', e => { if (!s.contains(e.relatedTarget)) s.classList.remove('over'); });
+    s.addEventListener('drop', e => { e.preventDefault(); s.classList.remove('over'); if (mDragId !== null) tryMatch(mDragId, p.id, s); mDragId = null; });
+    s.addEventListener('click', () => { if (mSelected) tryMatch(mSelected.pid, p.id, s); });
+    el.appendChild(s);
+  });
+}
+
+function renderJobs() {
+  const el = document.getElementById('jobs');
+  el.innerHTML = '';
+  shuffle([...mPairs]).forEach(p => {
+    const c = document.createElement('div');
+    c.className = 'job-card';
+    c.draggable = true;
+    c.dataset.pid = p.id;
+    c.innerHTML = '<img src="' + p.jobImg + '" alt="' + p.job + '"><div class="job-lbl">' + p.job + '</div>';
+    c.addEventListener('dragstart', e => { mDragId = p.id; c.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    c.addEventListener('dragend', () => c.classList.remove('dragging'));
+    c.addEventListener('click', () => {
+      if (mSelected && mSelected.pid === p.id) { c.classList.remove('selected'); mSelected = null; return; }
+      document.querySelectorAll('.job-card').forEach(x => x.classList.remove('selected'));
+      mSelected = { pid: p.id, el: c };
+      c.classList.add('selected');
+      document.getElementById('minfo').textContent = '이제 알맞은 도구 칸을 눌러요!';
+    });
+    addTouch(c, p.id);
+    el.appendChild(c);
+  });
+}
+
+function tryMatch(jobId, slotId, slotEl) {
+  if (slotEl.classList.contains('matched')) return;
+  mTries++;
+  if (jobId === slotId) {
+    mCorrect++;
+    const p = mPairs.find(x => x.id === jobId);
+    document.getElementById('sd-' + slotId).innerHTML =
+      '<div class="placed-card"><img src="' + p.jobImg + '" alt="' + p.job + '"><div class="placed-lbl">' + p.job + '</div></div>';
+    slotEl.classList.add('matched');
+    const jc = document.querySelector('.job-card[data-pid="' + jobId + '"]');
+    if (jc) jc.remove();
+    showSuccess(slotEl);
+    mSelected = null;
+    document.querySelectorAll('.job-card').forEach(x => x.classList.remove('selected'));
+    document.getElementById('minfo').textContent = '직업 카드를 선택하고 알맞은 도구 칸에 올려요!';
+    updMScore();
+    if (mCorrect === mPairs.length) {
+      setTimeout(() => {
+        document.getElementById('match-done-msg').textContent = mTries + '번 시도해서 모두 맞췄어요!';
+        document.getElementById('match-done').classList.add('on');
+        launchConfetti();
+      }, 500);
+    }
+  } else {
+    slotEl.classList.add('wrong');
+    setTimeout(() => slotEl.classList.remove('wrong'), 400);
+    if (mSelected) { mSelected.el.classList.remove('selected'); mSelected = null; }
+    document.getElementById('minfo').textContent = '아쉬워요! 다시 골라볼까요?';
+    setTimeout(() => { document.getElementById('minfo').textContent = '직업 카드를 선택하고 알맞은 도구 칸에 올려요!'; }, 1200);
+  }
+}
+
+function closeMatchDone() { document.getElementById('match-done').classList.remove('on'); }
+function updMScore() { document.getElementById('mscore').textContent = mCorrect + ' / ' + mPairs.length + ' 완료'; }
+
+function addTouch(card, pid) {
+  let clone = null;
+  card.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    mDragId = pid;
+    clone = card.cloneNode(true);
+    clone.style.cssText = 'position:fixed;z-index:9999;opacity:0.85;pointer-events:none;width:' + card.offsetWidth + 'px;transform:scale(1.08);transition:none;';
+    clone.style.left = (t.clientX - card.offsetWidth/2) + 'px';
+    clone.style.top = (t.clientY - card.offsetHeight/2) + 'px';
+    document.body.appendChild(clone);
+    card.classList.add('dragging');
+  }, {passive:true});
+  card.addEventListener('touchmove', e => {
+    if (!clone) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    clone.style.left = (t.clientX - card.offsetWidth/2) + 'px';
+    clone.style.top = (t.clientY - card.offsetHeight/2) + 'px';
+  }, {passive:false});
+  card.addEventListener('touchend', e => {
+    card.classList.remove('dragging');
+    if (clone) { clone.remove(); clone = null; }
+    const t = e.changedTouches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const slotEl = el ? el.closest('.slot-card') : null;
+    if (slotEl && mDragId !== null) tryMatch(mDragId, parseInt(slotEl.dataset.pid), slotEl);
+    mDragId = null;
+  });
+}
+
+// ===== 메모리게임 =====
+let memDiff = 0, memCards = [], memFlipped = [], memLocked = false;
+let memMatched = 0, memCorrect = 0, memTries = 0, memSec = 0, memTimer = null, memPreviewTimer = null;
+
+function setMemDiff(d) {
+  memDiff = d;
+  document.querySelectorAll('#page-memory .diff-tab').forEach((t,i) => t.classList.toggle('on', i===d));
+  initMem();
+}
+
+function initMem() {
+  memFlipped = []; memLocked = false; memMatched = 0; memCorrect = 0; memTries = 0; memSec = 0;
+  if (memTimer) clearInterval(memTimer);
+  if (memPreviewTimer) clearInterval(memPreviewTimer);
+  memTimer = null; memPreviewTimer = null;
+  document.getElementById('mem-timer').textContent = '0초';
+  document.getElementById('mem-complete').classList.remove('on');
+  updMemStats();
+
+  const oldCd = document.getElementById('mem-cdown');
+  if (oldCd) oldCd.remove();
+  document.getElementById('mem-board').style.display = 'none';
+  document.getElementById('mem-board').innerHTML = '';
+  document.getElementById('mem-ready').style.display = 'flex';
+  document.getElementById('mem-complete').classList.remove('on');
+  const cfg = DCFG[memDiff];
+  const pairs = cfg.pairs.map(i => PAIRS[i]);
+  memCards = [];
+  pairs.forEach((p,idx) => {
+    memCards.push({uid:idx*2, pid:p.id, type:'job', emoji:p.jobE, img:p.jobImg, label:p.job});
+    memCards.push({uid:idx*2+1, pid:p.id, type:'tool', emoji:p.toolE, img:p.toolImg, label:p.tool});
+  });
+  memCards = shuffle(memCards);
+
+  const board = document.getElementById('mem-board');
+  board.innerHTML = '';
+
+  const pad = window.innerWidth * 0.08;
+  const gap = 10;
+  const availW = window.innerWidth - pad - gap * (cfg.cols - 1);
+  const maxW = Math.floor(availW / cfg.cols);
+  const availH = window.innerHeight - 220;
+  const maxH = Math.floor((availH - gap * (cfg.rows - 1)) / cfg.rows);
+  const cardSize = Math.min(maxW, maxH, 200);
+
+  board.style.gridTemplateColumns = 'repeat(' + cfg.cols + ', ' + cardSize + 'px)';
+
+  memCards.forEach((card, pos) => {
+    const el = document.createElement('div');
+    el.className = 'mcard';
+    el.style.width = cardSize + 'px';
+    el.style.height = cardSize + 'px';
+    el.innerHTML = '<div class="mcard-inner">' +
+      '<div class="mcard-back"><div class="bq">?</div></div>' +
+      '<div class="mcard-front"><img src="' + card.img + '" alt="' + card.label + '"></div>' +
+      '</div>';
+    el.addEventListener('click', () => onMemClick(pos, el, card));
+    board.appendChild(el);
+  });
+
+}
+
+function startMem() {
+  const board = document.getElementById('mem-board');
+  document.getElementById('mem-ready').style.display = 'none';
+  board.style.display = 'grid';
+
+  const cfg = DCFG[memDiff];
+  const allCards = board.querySelectorAll('.mcard');
+  allCards.forEach(c => c.classList.add('flipped'));
+  memLocked = true;
+
+  let remain = cfg.preview / 1000;
+  const cdown = document.createElement('div');
+  cdown.id = 'mem-cdown';
+  cdown.style.cssText = 'text-align:center;font-size:1.1rem;font-weight:700;color:#4A7C59;margin-bottom:0.75rem;';
+  cdown.textContent = '잘 기억해요! ' + remain + '초 후 뒤집혀요 👀';
+  board.parentNode.insertBefore(cdown, board);
+
+  memPreviewTimer = setInterval(() => {
+    remain--;
+    if (remain > 0) {
+      cdown.textContent = '잘 기억해요! ' + remain + '초 후 뒤집혀요 👀';
+    } else {
+      clearInterval(memPreviewTimer);
+      memPreviewTimer = null;
+      cdown.remove();
+      allCards.forEach(c => c.classList.remove('flipped'));
+      memLocked = false;
+      memTimer = setInterval(() => { memSec++; document.getElementById('mem-timer').textContent = memSec + '초'; }, 1000);
+    }
+  }, 1000);
+}
+
+function onMemClick(pos, el, card) {
+  if (memLocked || el.classList.contains('matched') || el.classList.contains('flipped')) return;
+  if (memFlipped.length === 1 && memFlipped[0].pos === pos) return;
+  el.classList.add('flipped');
+  memFlipped.push({pos, el, card});
+  if (memFlipped.length === 2) {
+    memLocked = true; memTries++;
+    const [a, b] = memFlipped;
+    if (a.card.pid === b.card.pid && a.card.type !== b.card.type) {
+      memCorrect++; memMatched++;
+      setTimeout(() => {
+        a.el.classList.add('matched'); b.el.classList.add('matched');
+        memFlipped = []; memLocked = false;
+        updMemStats();
+        if (memMatched === DCFG[memDiff].pairs.length) {
+          if (memTimer) clearInterval(memTimer);
+          setTimeout(() => {
+            document.getElementById('mem-complete').classList.add('on');
+            document.getElementById('mem-complete-msg').textContent = memSec + '초 만에 완성했어요! 대단해요!';
+            launchConfetti();
+          }, 400);
+        }
+      }, 500);
+    } else {
+      setTimeout(() => {
+        a.el.classList.add('wrong'); b.el.classList.add('wrong');
+        setTimeout(() => {
+          a.el.classList.remove('flipped','wrong'); b.el.classList.remove('flipped','wrong');
+          memFlipped = []; memLocked = false;
+        }, 500);
+      }, 600);
+    }
+  }
+}
+
+function updMemStats() {
+  document.getElementById('mem-matched').textContent = memMatched + '/' + DCFG[memDiff].pairs.length;
+}
+
+// ===== 유틸 =====
+function shuffle(a) {
+  const r = [...a];
+  for (let i = r.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [r[i],r[j]]=[r[j],r[i]]; }
+  return r;
+}
+
+function showSuccess(el) {
+  const msgs = ['잘했어요!','정답이에요!','딩동댕!','맞았어요!'];
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msgs[Math.floor(Math.random()*msgs.length)];
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1000);
+  const colors = ['#F5C842','#4A7C59','#E8854A','#4A7BA8','#C94A4A','#7AB893','#F5C842','#A0784A','#E8854A','#4A7C59','#F5C842','#4A7BA8'];
+  const sizes = [8,12,7,10,14,8,11,9,13,7,10,12];
+  const r = el.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  colors.forEach((color, i) => {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (i/colors.length)*360 + Math.random()*20;
+    const dist = 50 + Math.random()*60;
+    const rad = angle*Math.PI/180;
+    p.style.left = (cx - sizes[i]/2) + 'px'; p.style.top = (cy - sizes[i]/2) + 'px';
+    p.style.width = sizes[i]+'px'; p.style.height = sizes[i]+'px';
+    p.style.background = color;
+    p.style.setProperty('--tx', Math.cos(rad)*dist*0.5+'px');
+    p.style.setProperty('--ty', Math.sin(rad)*dist*0.5+'px');
+    p.style.setProperty('--tx2', Math.cos(rad)*dist+'px');
+    p.style.setProperty('--ty2', Math.sin(rad)*dist+'px');
+    p.style.animationDelay = (i*0.04)+'s';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  });
+}
+
+function launchConfetti() {
+  const colors = ['#F5C842','#4A7C59','#E8854A','#4A7BA8','#C94A4A','#7AB893','#D4A8E8','#F0A0B0'];
+  for (let i = 0; i < 120; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti-el';
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      const size = 8 + Math.random()*8;
+      const dur = (1.5 + Math.random()*2) + 's';
+      el.style.cssText = 'top:-20px;left:'+Math.random()*100+'vw;width:'+size+'px;height:'+(Math.random()>0.5?size*0.5:size)+'px;background:'+color+';border-radius:'+(Math.random()>0.5?'2px':'50%')+';transform:rotate('+Math.random()*360+'deg);';
+      el.style.setProperty('--dur', dur);
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }, i*25);
+  }
+}
+
+initMatch();
+initMem();
+</script>
+</body>
+</html>
